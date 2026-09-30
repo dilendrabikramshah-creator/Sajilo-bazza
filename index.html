@@ -20,9 +20,10 @@
     <meta name="twitter:title" content="Sajilo Bazar - Nepal Ko Sajilo Online Bazar" />
     <meta name="twitter:description" content="Nepal's premier e-commerce marketplace with eSewa, Khalti, Fonepay, Cash on Delivery, and delivery across Nepal." />
 
-    <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
+    <!-- Icons & Manifest -->
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.json" />
 
     <!-- Google Fonts: Plus Jakarta Sans for refined legibility -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -45,9 +46,54 @@
       }
     }
     </script>
+    <!-- GitHub Pages Path Normalization & SPA 404 Routing -->
+    <script>
+      (function() {
+        // 1. Ensure trailing slash for GitHub Pages repo URLs so relative assets resolve properly
+        var path = window.location.pathname;
+        if (path.length > 1 && !path.endsWith('/') && !path.split('/').pop().includes('.')) {
+          window.location.replace(window.location.protocol + '//' + window.location.host + path + '/' + window.location.search + window.location.hash);
+          return;
+        }
+
+        // 2. GitHub Pages SPA Query-string restoration from 404.html redirect
+        var search = window.location.search;
+        if (search && search[1] === '/') {
+          var decoded = search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&');
+          }).join('?');
+          window.history.replaceState(null, null,
+            window.location.pathname.slice(0, -1) + decoded + window.location.hash
+          );
+        }
+      })();
+    </script>
   </head>
   <body class="bg-neutral-50 text-neutral-900 antialiased selection:bg-red-600 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback loader prevents blank white screen while JavaScript initializes -->
+      <div id="sb-initial-loader" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #FAFAFA; font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 20px;">
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.4);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <h1 style="font-size: 20px; font-weight: 700; color: #171717; margin: 0 0 4px 0; letter-spacing: -0.02em;">Sajilo Bazar</h1>
+        <p style="font-size: 13px; color: #737373; margin: 0 0 20px 0;">Nepal Ko Sajilo Online Bazar</p>
+        <div style="width: 28px; height: 28px; border: 3px solid #F3F4F6; border-top-color: #DC2626; border-radius: 50%; animation: sb-spin 0.8s linear infinite;"></div>
+        <style>
+          @keyframes sb-spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
+    </div>
+    <noscript>
+      <div style="padding: 24px; text-align: center; color: #DC2626; font-family: sans-serif;">
+        <h2>JavaScript is required to browse Sajilo Bazar.</h2>
+        <p>Please enable JavaScript in your browser settings to continue shopping.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

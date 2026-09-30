@@ -14,8 +14,8 @@ import {
   INITIAL_SUPPORT_TICKETS,
   INITIAL_TAX_CONFIG,
   DEFAULT_STAFF_PERMISSIONS,
-} from './src/data/mockDatabase';
-import { Product, Order, Coupon, Campaign, SupportTicket, AuditLog, TaxConfig, User } from './src/types';
+} from './src/data/mockDatabase.ts';
+import type { Product, Order, Coupon, Campaign, SupportTicket, AuditLog, TaxConfig, User } from './src/types/index.ts';
 
 dotenv.config();
 

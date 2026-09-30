@@ -1,4 +1,4 @@
-import { Product, Category, User, Order, Coupon, Campaign, SupportTicket, AuditLog, TaxConfig, PermissionMatrix } from '../types';
+import type { Product, Category, User, Order, Coupon, Campaign, SupportTicket, AuditLog, TaxConfig, PermissionMatrix } from '../types/index.ts';
 
 export const INITIAL_CATEGORIES: Category[] = [
   {

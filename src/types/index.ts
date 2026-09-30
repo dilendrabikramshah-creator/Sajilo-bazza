@@ -79,6 +79,8 @@ export interface Product {
   specifications: Record<string, string>;
   images: string[];
   featuredImage: string;
+  imageAlt?: string;
+  imageSource?: string;
   videoUrl?: string;
   variants?: ProductVariant[];
   tags: string[];

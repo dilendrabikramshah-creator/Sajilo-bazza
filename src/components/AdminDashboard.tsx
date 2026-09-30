@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatNPR } from '../data/nepalData';
 import { Product, Order, DeliveryStatus, Coupon, Campaign, SupportTicket, AuditLog } from '../types';
+import { ProductImageManager } from './ProductImageManager';
 import {
   TrendingUp,
   Package,
@@ -77,6 +78,9 @@ export const AdminDashboard: React.FC = () => {
   const [prodDiscountPrice, setProdDiscountPrice] = useState('4200');
   const [prodStock, setProdStock] = useState('20');
   const [prodImage, setProdImage] = useState('./images/product_nepal_pashmina_1790777676916.jpg');
+  const [prodImages, setProdImages] = useState<string[]>(['./images/product_nepal_pashmina_1790777676916.jpg']);
+  const [prodImageAlt, setProdImageAlt] = useState('');
+  const [prodImageSource, setProdImageSource] = useState('Official Brand Press');
   const [prodDesc, setProdDesc] = useState('');
   const [prodDistrict, setProdDistrict] = useState('Kathmandu');
   const [isLocal, setIsLocal] = useState(true);
@@ -199,7 +203,9 @@ export const AdminDashboard: React.FC = () => {
       lowStockThreshold: 5,
       description: prodDesc || `Premium ${prodName} in Nepal`,
       featuredImage: prodImage,
-      images: [prodImage],
+      images: prodImages.length > 0 ? prodImages : [prodImage],
+      imageAlt: prodImageAlt,
+      imageSource: prodImageSource,
       originDistrict: prodDistrict,
       isLocalNepaliProduct: isLocal,
       specifications: {
@@ -331,6 +337,10 @@ export const AdminDashboard: React.FC = () => {
               setProdDiscountPrice('3800');
               setProdStock('25');
               setProdDesc('');
+              setProdImage('./images/product_nepal_pashmina_1790777676916.jpg');
+              setProdImages(['./images/product_nepal_pashmina_1790777676916.jpg']);
+              setProdImageAlt('');
+              setProdImageSource('');
               setProductModalOpen(true);
             }}
             className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
@@ -521,6 +531,10 @@ export const AdminDashboard: React.FC = () => {
                 setProdName('');
                 setProdPrice('3500');
                 setProdStock('20');
+                setProdImage('./images/product_nepal_pashmina_1790777676916.jpg');
+                setProdImages(['./images/product_nepal_pashmina_1790777676916.jpg']);
+                setProdImageAlt('');
+                setProdImageSource('');
                 setProductModalOpen(true);
               }}
               className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700"
@@ -587,6 +601,9 @@ export const AdminDashboard: React.FC = () => {
                             setProdDiscountPrice(p.discountPrice ? String(p.discountPrice) : '');
                             setProdStock(String(p.stock));
                             setProdImage(p.featuredImage);
+                            setProdImages(p.images && p.images.length > 0 ? p.images : [p.featuredImage]);
+                            setProdImageAlt(p.imageAlt || '');
+                            setProdImageSource(p.imageSource || 'Original product photo');
                             setProdDesc(p.description);
                             setProdDistrict(p.originDistrict || 'Kathmandu');
                             setIsLocal(!!p.isLocalNepaliProduct);
@@ -999,15 +1016,22 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="font-semibold block mb-1">Product Image URL / Asset</label>
-                <input
-                  type="text"
-                  value={prodImage}
-                  onChange={(e) => setProdImage(e.target.value)}
-                  className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded-lg text-xs font-mono"
-                />
-              </div>
+              {/* Multi-source Product Image Manager (Upload, Link, Google Search) */}
+              <ProductImageManager
+                featuredImage={prodImage}
+                images={prodImages}
+                imageAlt={prodImageAlt}
+                imageSource={prodImageSource}
+                productName={prodName}
+                category={prodCategory}
+                brand={prodBrand}
+                onChange={({ featuredImage, images, imageAlt, imageSource }) => {
+                  setProdImage(featuredImage);
+                  setProdImages(images);
+                  setProdImageAlt(imageAlt);
+                  setProdImageSource(imageSource);
+                }}
+              />
 
               {/* AI Description Generator Button */}
               <div>

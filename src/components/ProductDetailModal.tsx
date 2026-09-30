@@ -34,6 +34,13 @@ export const ProductDetailModal: React.FC = () => {
   const [selectedProvince, setSelectedProvince] = useState('Bagmati Province');
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
   const [added, setAdded] = useState(false);
+  const [activeImage, setActiveImage] = useState<string>('');
+
+  React.useEffect(() => {
+    if (selectedProduct) {
+      setActiveImage(selectedProduct.featuredImage);
+    }
+  }, [selectedProduct]);
 
   if (activeModal !== 'product_detail' || !selectedProduct) {
     return null;
@@ -124,11 +131,11 @@ export const ProductDetailModal: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Gallery Image (Left Column) */}
             <div className="space-y-4">
-              <div className="relative aspect-4/3 w-full bg-neutral-100 rounded-xl overflow-hidden border border-neutral-200">
+              <div className="relative aspect-4/3 w-full bg-neutral-100 rounded-xl overflow-hidden border border-neutral-200 shadow-xs">
                 <img
-                  src={p.featuredImage}
-                  alt={p.name}
-                  className="w-full h-full object-cover object-center"
+                  src={activeImage || p.featuredImage}
+                  alt={p.imageAlt || p.name}
+                  className="w-full h-full object-cover object-center transition-all duration-300"
                   referrerPolicy="no-referrer"
                 />
                 {p.isLocalNepaliProduct && (
@@ -136,7 +143,32 @@ export const ProductDetailModal: React.FC = () => {
                     {language === 'ne' ? 'स्वदेशी उत्पादन' : 'Authentic Nepali'}
                   </div>
                 )}
+                {p.imageSource && (
+                  <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded font-mono">
+                    {p.imageSource}
+                  </div>
+                )}
               </div>
+
+              {/* Gallery Thumbnails Strip */}
+              {p.images && p.images.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {p.images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveImage(img)}
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                        (activeImage || p.featuredImage) === img
+                          ? 'border-red-600 ring-2 ring-red-400/50 scale-105'
+                          : 'border-neutral-200 hover:border-neutral-400 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Trust Badges */}
               <div className="grid grid-cols-3 gap-2 text-center text-xs">

@@ -66,7 +66,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {!imgError ? (
           <img
             src={product.featuredImage}
-            alt={product.name}
+            alt={product.imageAlt || product.name}
             onError={() => setImgError(true)}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
@@ -88,6 +88,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {discountPercent > 0 && (
             <span className="text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded shadow-xs">
               -{discountPercent}%
+            </span>
+          )}
+          {product.stock > 0 && product.stock <= 5 && (
+            <span className="text-[10px] font-bold bg-neutral-900/90 text-amber-300 px-1.5 py-0.5 rounded shadow-xs backdrop-blur-xs">
+              Only {product.stock} left
             </span>
           )}
         </div>

@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Sajilo Bazar - Nepal Ko Sajilo Online Bazar",
+  "short_name": "SajiloBazar",
+  "description": "Nepal premier e-commerce marketplace for electronics, fashion, groceries, and authentic local products with eSewa, Khalti, and COD.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#DC2626",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

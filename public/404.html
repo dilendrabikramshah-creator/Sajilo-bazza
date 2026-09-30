@@ -5,7 +5,9 @@
     <title>Sajilo Bazar</title>
     <script type="text/javascript">
       // GitHub Pages SPA redirect: preserves path and query
-      var pathSegmentsToKeep = 1;
+      // Automatically detect if deployed under github.io subpath (1 segment) or custom root domain (0 segments)
+      var isGithubPagesDomain = window.location.hostname.endsWith('github.io');
+      var pathSegmentsToKeep = isGithubPagesDomain ? 1 : 0;
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
