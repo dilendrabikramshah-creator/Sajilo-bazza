@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatNPR } from '../data/nepalData';
-import { Product, Order, DeliveryStatus, Coupon, Campaign, SupportTicket, AuditLog } from '../types';
+import { Product, Order, DeliveryStatus, Coupon, Campaign, SupportTicket, AuditLog, User, UserRole } from '../types';
+import { INITIAL_USERS, INITIAL_AUDIT_LOGS, INITIAL_SUPPORT_TICKETS, INITIAL_COUPONS } from '../data/mockDatabase';
 import { ProductImageManager } from './ProductImageManager';
 import {
   TrendingUp,
@@ -25,6 +26,11 @@ import {
   Settings,
   RefreshCw,
   X,
+  UserPlus,
+  UserCheck,
+  Key,
+  Lock,
+  Search,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -41,8 +47,27 @@ export const AdminDashboard: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'inventory' | 'campaigns' | 'coupons' | 'tickets' | 'audit' | 'settings'
+    'overview' | 'products' | 'orders' | 'inventory' | 'staff' | 'campaigns' | 'coupons' | 'tickets' | 'audit' | 'settings'
   >('overview');
+
+  // Staff & Role Management State (Super Admin)
+  const [staffList, setStaffList] = useState<User[]>(() => {
+    try {
+      const saved = localStorage.getItem('sb_staff_users');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_USERS;
+  });
+  const [staffModalOpen, setStaffModalOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<User | null>(null);
+  const [staffName, setStaffName] = useState('');
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPhone, setStaffPhone] = useState('');
+  const [staffRole, setStaffRole] = useState<UserRole>('staff');
+  const [staffStatus, setStaffStatus] = useState<'active' | 'suspended'>('active');
+  const [staffSearchQuery, setStaffSearchQuery] = useState('');
 
   // Analytics State
   const [analytics, setAnalytics] = useState<{
@@ -117,42 +142,205 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchStaff = async () => {
+    try {
+      const res = await fetch('/api/admin/staff');
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setStaffList(data.data);
+          localStorage.setItem('sb_staff_users', JSON.stringify(data.data));
+          return;
+        }
+      }
+    } catch {
+      // Fallback to local storage or mock
+    }
+  };
+
   const fetchAuditLogs = async () => {
     try {
       const res = await fetch('/api/admin/audit-logs');
-      const data = await res.json();
-      if (data.success) setAuditLogs(data.data);
-    } catch (e) {
-      console.error(e);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setAuditLogs(data.data);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
     }
+    setAuditLogs(INITIAL_AUDIT_LOGS);
   };
 
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/support/tickets');
-      const data = await res.json();
-      if (data.success) setTickets(data.data);
-    } catch (e) {
-      console.error(e);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setTickets(data.data);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
     }
+    setTickets(INITIAL_SUPPORT_TICKETS);
   };
 
   const fetchCoupons = async () => {
     try {
       const res = await fetch('/api/coupons');
-      const data = await res.json();
-      if (data.success) setCouponsList(data.data);
-    } catch (e) {
-      console.error(e);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setCouponsList(data.data);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
     }
+    setCouponsList(INITIAL_COUPONS);
   };
 
   useEffect(() => {
     fetchAnalytics();
+    fetchStaff();
     fetchAuditLogs();
     fetchTickets();
     fetchCoupons();
   }, [orders, products]);
+
+  const handleSaveStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentUser?.role !== 'super_admin') {
+      showToast('Permission Denied: Only Super Admin can change staff details or roles');
+      return;
+    }
+
+    if (!staffName.trim() || !staffEmail.trim()) {
+      showToast('Staff name and email are required');
+      return;
+    }
+
+    if (editingStaff) {
+      const updatedUser: User = {
+        ...editingStaff,
+        name: staffName.trim(),
+        email: staffEmail.trim(),
+        phone: staffPhone.trim() || '+977 9800000000',
+        role: staffRole,
+        status: staffStatus,
+      };
+
+      try {
+        await fetch(`/api/admin/staff/${editingStaff.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedUser),
+        });
+      } catch {
+        // Static mode
+      }
+
+      const updatedList = staffList.map((s) => (s.id === editingStaff.id ? updatedUser : s));
+      setStaffList(updatedList);
+      localStorage.setItem('sb_staff_users', JSON.stringify(updatedList));
+
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}`,
+        staffId: currentUser.id,
+        staffName: currentUser.name,
+        staffRole: 'super_admin',
+        action: 'UPDATE_STAFF_DETAILS',
+        details: `Super Admin changed staff name to "${updatedUser.name}" and assigned role "${updatedUser.role}"`,
+        timestamp: new Date().toISOString(),
+      };
+      setAuditLogs((prev) => [newLog, ...prev]);
+
+      showToast(`Updated staff "${staffName}" with role "${staffRole}"`);
+    } else {
+      const newStaff: User = {
+        id: `usr-${Date.now()}`,
+        name: staffName.trim(),
+        email: staffEmail.trim(),
+        phone: staffPhone.trim() || '+977 9800000000',
+        role: staffRole,
+        status: staffStatus,
+        createdAt: new Date().toISOString(),
+      };
+
+      try {
+        await fetch('/api/admin/staff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newStaff),
+        });
+      } catch {
+        // Static mode
+      }
+
+      const updatedList = [newStaff, ...staffList];
+      setStaffList(updatedList);
+      localStorage.setItem('sb_staff_users', JSON.stringify(updatedList));
+
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}`,
+        staffId: currentUser.id,
+        staffName: currentUser.name,
+        staffRole: 'super_admin',
+        action: 'CREATE_STAFF_MEMBER',
+        details: `Super Admin created new staff member "${newStaff.name}" (${newStaff.email}) with role "${newStaff.role}"`,
+        timestamp: new Date().toISOString(),
+      };
+      setAuditLogs((prev) => [newLog, ...prev]);
+
+      showToast(`Created new staff "${staffName}" as ${staffRole}`);
+    }
+
+    setStaffModalOpen(false);
+    setEditingStaff(null);
+  };
+
+  const handleDeleteStaff = async (staffId: string, name: string) => {
+    if (currentUser?.role !== 'super_admin') {
+      showToast('Permission Denied: Only Super Admin can remove staff members');
+      return;
+    }
+    if (staffId === 'usr-superadmin') {
+      showToast('Cannot delete primary Super Admin account');
+      return;
+    }
+    if (!confirm(`Are you sure you want to remove staff member "${name}"?`)) {
+      return;
+    }
+
+    try {
+      await fetch(`/api/admin/staff/${staffId}`, { method: 'DELETE' });
+    } catch {
+      // Static mode
+    }
+
+    const updatedList = staffList.filter((s) => s.id !== staffId);
+    setStaffList(updatedList);
+    localStorage.setItem('sb_staff_users', JSON.stringify(updatedList));
+
+    const newLog: AuditLog = {
+      id: `log-${Date.now()}`,
+      staffId: currentUser.id,
+      staffName: currentUser.name,
+      staffRole: 'super_admin',
+      action: 'DELETE_STAFF_MEMBER',
+      details: `Super Admin removed staff member "${name}"`,
+      timestamp: new Date().toISOString(),
+    };
+    setAuditLogs((prev) => [newLog, ...prev]);
+
+    showToast(`Staff member "${name}" removed`);
+  };
 
   // AI Description & Copy Generator for Nepali E-Commerce
   const handleGenerateAIDescription = async () => {
@@ -384,6 +572,20 @@ export const AdminDashboard: React.FC = () => {
           }`}
         >
           Inventory Control
+        </button>
+        <button
+          onClick={() => setActiveTab('staff')}
+          className={`px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+            activeTab === 'staff' ? 'bg-neutral-900 text-white' : 'hover:bg-neutral-100 text-neutral-700'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>Staff & Roles ({staffList.length})</span>
+          {currentUser?.role === 'super_admin' && (
+            <span className="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded font-mono font-bold uppercase">
+              Super Admin
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('coupons')}
@@ -887,6 +1089,226 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 8: STAFF & ROLES (SUPER ADMIN CONSOLE) */}
+      {activeTab === 'staff' && (
+        <div className="space-y-4">
+          {/* Permission / Authorization Status Banner */}
+          {currentUser?.role === 'super_admin' ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900 shadow-xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-xs text-emerald-950 flex items-center gap-2">
+                  <span>Super Admin Privilege Active</span>
+                  <span className="bg-emerald-200 text-emerald-900 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    Full Control
+                  </span>
+                </h4>
+                <p className="text-[11px] text-emerald-800 mt-0.5">
+                  You have full authority to change staff names, create new staff members, and assign roles. All modifications are permanently recorded in the Audit Trail.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900 shadow-xs">
+              <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-xs text-amber-950 flex items-center gap-2">
+                  <span>Read-Only Mode ({currentUser?.role})</span>
+                  <span className="bg-amber-200 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    Super Admin Required
+                  </span>
+                </h4>
+                <p className="text-[11px] text-amber-800 mt-0.5">
+                  Viewing staff profiles in read-only mode. Use the <strong>Role Switcher</strong> in the top navigation bar to switch to <strong>Super Admin</strong> to rename staff or create new staff and roles.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Action & Search Bar */}
+          <div className="bg-white rounded-xl border border-neutral-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                value={staffSearchQuery}
+                onChange={(e) => setStaffSearchQuery(e.target.value)}
+                placeholder="Search staff by name, email, or role..."
+                className="w-full pl-8 pr-3 py-2 bg-neutral-50 border border-neutral-300 rounded-lg text-xs"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                if (currentUser?.role !== 'super_admin') {
+                  showToast('Super Admin role required to create new staff');
+                  return;
+                }
+                setEditingStaff(null);
+                setStaffName('');
+                setStaffEmail('');
+                setStaffPhone('+977 98');
+                setStaffRole('staff');
+                setStaffStatus('active');
+                setStaffModalOpen(true);
+              }}
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Create New Staff Member</span>
+            </button>
+          </div>
+
+          {/* Staff Table */}
+          <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/60">
+              <div className="text-xs font-bold text-neutral-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-neutral-600" />
+                <span>Team & Staff Directory ({staffList.length} Accounts)</span>
+              </div>
+              <span className="text-[11px] text-neutral-500">
+                Sorted by administrative hierarchy
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-neutral-100 text-neutral-700 uppercase font-semibold text-[11px] border-b border-neutral-200">
+                  <tr>
+                    <th className="py-2.5 px-4">Staff Member</th>
+                    <th className="py-2.5 px-4">Assigned Role</th>
+                    <th className="py-2.5 px-4">Contact (Email & Phone)</th>
+                    <th className="py-2.5 px-4 text-center">Status</th>
+                    <th className="py-2.5 px-4 text-center">Joined Date</th>
+                    <th className="py-2.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-200">
+                  {staffList
+                    .filter((s) => {
+                      if (!staffSearchQuery.trim()) return true;
+                      const q = staffSearchQuery.toLowerCase();
+                      return (
+                        s.name.toLowerCase().includes(q) ||
+                        s.email.toLowerCase().includes(q) ||
+                        s.role.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((s) => {
+                      return (
+                        <tr key={s.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              {s.avatar ? (
+                                <img
+                                  src={s.avatar}
+                                  alt={s.name}
+                                  className="w-9 h-9 rounded-full object-cover border border-neutral-200 shadow-xs"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full bg-neutral-900 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                                  {s.name.slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-bold text-neutral-900 flex items-center gap-1.5">
+                                  <span>{s.name}</span>
+                                  {s.id === currentUser?.id && (
+                                    <span className="text-[9px] bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded font-mono">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-neutral-400 font-mono">{s.id}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                                s.role === 'super_admin'
+                                  ? 'bg-red-100 text-red-700 border border-red-200'
+                                  : s.role === 'admin'
+                                  ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                  : s.role === 'manager'
+                                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                  : s.role === 'staff'
+                                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                  : 'bg-amber-100 text-amber-700 border border-amber-200'
+                              }`}
+                            >
+                              <Key className="w-3 h-3" />
+                              {s.role.replace('_', ' ')}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-neutral-800">{s.email}</div>
+                            <div className="text-[11px] text-neutral-400 font-mono">{s.phone}</div>
+                          </td>
+
+                          <td className="py-3 px-4 text-center">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                s.status === 'suspended'
+                                  ? 'bg-neutral-200 text-neutral-600'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}
+                            >
+                              {s.status === 'suspended' ? 'Suspended' : 'Active'}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-4 text-center text-neutral-500 font-mono text-[11px]">
+                            {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '2026-01-01'}
+                          </td>
+
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => {
+                                  if (currentUser?.role !== 'super_admin') {
+                                    showToast('Super Admin role required to edit staff');
+                                    return;
+                                  }
+                                  setEditingStaff(s);
+                                  setStaffName(s.name);
+                                  setStaffEmail(s.email);
+                                  setStaffPhone(s.phone);
+                                  setStaffRole(s.role);
+                                  setStaffStatus(s.status || 'active');
+                                  setStaffModalOpen(true);
+                                }}
+                                className="flex items-center gap-1 px-2.5 py-1 text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded font-semibold text-[11px] transition-colors"
+                                title="Change name or role"
+                              >
+                                <Edit className="w-3 h-3" />
+                                <span>Edit Name & Role</span>
+                              </button>
+
+                              {s.id !== 'usr-superadmin' && (
+                                <button
+                                  onClick={() => handleDeleteStaff(s.id, s.name)}
+                                  disabled={currentUser?.role !== 'super_admin'}
+                                  className="p-1 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
+                                  title="Delete staff"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: ADD / EDIT PRODUCT */}
       {productModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
@@ -1169,6 +1591,138 @@ export const AdminDashboard: React.FC = () => {
                 Update Status
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CREATE / EDIT STAFF MEMBER */}
+      {staffModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl border border-neutral-200 max-w-lg w-full p-6 space-y-4 my-auto text-xs">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-red-100 text-red-600">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-neutral-900">
+                    {editingStaff ? 'Change Staff Name & Role' : 'Create New Staff & Assign Role'}
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">
+                    Super Admin Console · Sajilo Bazar Staff Management
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setStaffModalOpen(false)}
+                className="p-1 text-neutral-400 hover:text-neutral-900"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveStaff} className="space-y-4">
+              <div>
+                <label className="font-semibold block mb-1 text-neutral-700">
+                  Staff Full Name * (Changeable by Super Admin)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={staffName}
+                  onChange={(e) => setStaffName(e.target.value)}
+                  placeholder="e.g. Ram Bahadur Gurung"
+                  className="w-full p-2.5 bg-neutral-50 border border-neutral-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1 text-neutral-700">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={staffEmail}
+                    onChange={(e) => setStaffEmail(e.target.value)}
+                    placeholder="staff@sajilobazar.com"
+                    className="w-full p-2.5 bg-neutral-50 border border-neutral-300 rounded-lg text-xs focus:ring-2 focus:ring-red-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-neutral-700">Phone Number</label>
+                  <input
+                    type="text"
+                    value={staffPhone}
+                    onChange={(e) => setStaffPhone(e.target.value)}
+                    placeholder="+977 98xxxxxxxx"
+                    className="w-full p-2.5 bg-neutral-50 border border-neutral-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-red-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1 text-neutral-700">
+                  Assign Staff Role *
+                </label>
+                <select
+                  value={staffRole}
+                  onChange={(e) => setStaffRole(e.target.value as UserRole)}
+                  className="w-full p-2.5 bg-neutral-50 border border-neutral-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-hidden"
+                >
+                  <option value="super_admin">Super Admin (Full system owner & access control)</option>
+                  <option value="admin">Store Admin (Catalog, orders, coupons, financial reports)</option>
+                  <option value="manager">Store Manager (Inventory control, delivery logistics)</option>
+                  <option value="staff">Operations Staff (Order status updates, dispatch fulfillment)</option>
+                  <option value="vendor">Artisan Vendor (Vendor merchant portal)</option>
+                </select>
+                <p className="text-[10px] text-neutral-400 mt-1">
+                  Roles automatically determine permissions across marketplace modules.
+                </p>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1 text-neutral-700">Account Status</label>
+                <div className="flex items-center gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="staffStatus"
+                      checked={staffStatus === 'active'}
+                      onChange={() => setStaffStatus('active')}
+                      className="accent-red-600"
+                    />
+                    <span className="font-semibold text-emerald-700">Active (Authorized)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="staffStatus"
+                      checked={staffStatus === 'suspended'}
+                      onChange={() => setStaffStatus('suspended')}
+                      className="accent-red-600"
+                    />
+                    <span className="font-semibold text-neutral-500">Suspended</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => setStaffModalOpen(false)}
+                  className="px-4 py-2 border border-neutral-300 hover:bg-neutral-100 rounded-lg font-semibold text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs shadow-xs transition-colors"
+                >
+                  {editingStaff ? 'Save Name & Role Changes' : 'Create Staff Member'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

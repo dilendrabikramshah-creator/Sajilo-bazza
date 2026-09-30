@@ -10,6 +10,8 @@ export interface User {
   twoFactorEnabled?: boolean;
   createdAt: string;
   loyaltyPoints?: number;
+  status?: 'active' | 'suspended';
+  permissions?: Partial<PermissionMatrix>;
   vendorInfo?: {
     storeName: string;
     panNumber: string;

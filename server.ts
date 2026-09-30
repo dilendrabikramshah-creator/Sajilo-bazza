@@ -557,6 +557,111 @@ app.get('/api/admin/audit-logs', (req, res) => {
   res.json({ success: true, data: auditLogs });
 });
 
+// -------------------------------------------------------------
+// API Routes: Staff & Role Management (Super Admin Exclusive)
+// -------------------------------------------------------------
+
+app.get('/api/admin/staff', (req, res) => {
+  res.json({ success: true, data: users });
+});
+
+app.post('/api/admin/staff', (req, res) => {
+  const { name, email, phone, role, permissions } = req.body;
+  if (!name || !email) {
+    return res.status(400).json({ success: false, message: 'Name and email are required.' });
+  }
+
+  const newStaff: User = {
+    id: `usr-${Date.now()}`,
+    name,
+    email,
+    phone: phone || '+977 9800000000',
+    role: role || 'staff',
+    createdAt: new Date().toISOString(),
+    status: 'active',
+    permissions: permissions || {},
+  };
+
+  users.unshift(newStaff);
+
+  auditLogs.unshift({
+    id: `log-${Date.now()}`,
+    staffId: 'usr-superadmin',
+    staffName: 'Super Admin',
+    staffRole: 'super_admin',
+    action: 'CREATE_STAFF_MEMBER',
+    details: `Created new staff member ${name} (${email}) with role ${newStaff.role}`,
+    timestamp: new Date().toISOString(),
+    ipAddress: req.ip || '127.0.0.1',
+  });
+
+  res.status(201).json({ success: true, data: newStaff });
+});
+
+app.put('/api/admin/staff/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, email, phone, role, status, permissions } = req.body;
+
+  const userIndex = users.findIndex((u) => u.id === id);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Staff member not found.' });
+  }
+
+  const oldUser = users[userIndex];
+  const updatedUser: User = {
+    ...oldUser,
+    name: name !== undefined ? name : oldUser.name,
+    email: email !== undefined ? email : oldUser.email,
+    phone: phone !== undefined ? phone : oldUser.phone,
+    role: role !== undefined ? role : oldUser.role,
+    status: status !== undefined ? status : oldUser.status,
+    permissions: permissions !== undefined ? permissions : oldUser.permissions,
+  };
+
+  users[userIndex] = updatedUser;
+
+  auditLogs.unshift({
+    id: `log-${Date.now()}`,
+    staffId: 'usr-superadmin',
+    staffName: 'Super Admin',
+    staffRole: 'super_admin',
+    action: 'UPDATE_STAFF_DETAILS',
+    details: `Updated staff member ${oldUser.name}: Name "${oldUser.name}" -> "${updatedUser.name}", Role "${oldUser.role}" -> "${updatedUser.role}"`,
+    timestamp: new Date().toISOString(),
+    ipAddress: req.ip || '127.0.0.1',
+  });
+
+  res.json({ success: true, data: updatedUser });
+});
+
+app.delete('/api/admin/staff/:id', (req, res) => {
+  const { id } = req.params;
+
+  if (id === 'usr-superadmin') {
+    return res.status(403).json({ success: false, message: 'Primary Super Admin account cannot be deleted.' });
+  }
+
+  const user = users.find((u) => u.id === id);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'Staff member not found.' });
+  }
+
+  users = users.filter((u) => u.id !== id);
+
+  auditLogs.unshift({
+    id: `log-${Date.now()}`,
+    staffId: 'usr-superadmin',
+    staffName: 'Super Admin',
+    staffRole: 'super_admin',
+    action: 'DELETE_STAFF_MEMBER',
+    details: `Removed staff member ${user.name} (${user.email}, role: ${user.role})`,
+    timestamp: new Date().toISOString(),
+    ipAddress: req.ip || '127.0.0.1',
+  });
+
+  res.json({ success: true, message: `Staff member ${user.name} deleted successfully.` });
+});
+
 app.get('/api/admin/permissions', (req, res) => {
   res.json({ success: true, data: staffPermissions });
 });

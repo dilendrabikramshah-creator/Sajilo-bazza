@@ -35,11 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Build production application
-        run: npm run build
-
       - name: Setup GitHub Pages
+        id: pages
         uses: actions/configure-pages@v4
+
+      - name: Build production application
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_path || './' }}
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
