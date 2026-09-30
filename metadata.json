@@ -1,0 +1,9 @@
+{
+  "name": "Sajilo Bazar - Nepal Ko Sajilo Online Bazar",
+  "description": "Nepal's premier e-commerce marketplace featuring fast delivery across all 7 provinces, eSewa, Khalti, Fonepay, COD, and authentic Nepali products.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
+
