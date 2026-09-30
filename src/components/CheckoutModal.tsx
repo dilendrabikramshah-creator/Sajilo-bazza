@@ -24,6 +24,8 @@ export const CheckoutModal: React.FC = () => {
     cartSubtotal,
     clearCart,
     currentUser,
+    orders,
+    addOrder,
     reloadOrders,
     setTrackingOrderNumber,
     setSelectedOrderForInvoice,
@@ -107,20 +109,14 @@ export const CheckoutModal: React.FC = () => {
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
     try {
-      // 1. Verify Payment server-side
-      const paymentRes = await fetch('/api/payments/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: paymentMethod,
-          amount: grandTotal,
-          transactionId: `${paymentMethod.toUpperCase()}-TXN-${Date.now()}`,
-        }),
-      });
-      const paymentData = await paymentRes.json();
+      const generatedTxnId = `${paymentMethod.toUpperCase()}-TXN-${Date.now()}`;
+      const nextSeq = String(orders.length + 125).padStart(6, '0');
+      const orderNumber = `SB-2026-${nextSeq}`;
+      const orderId = `ord-${Date.now()}`;
 
-      // 2. Submit Order to API
       const orderPayload = {
+        id: orderId,
+        orderNumber,
         userId: currentUser?.id || 'guest-user',
         customerName: fullName,
         customerEmail: currentUser?.email || 'customer@sajilobazar.com',
@@ -151,32 +147,61 @@ export const CheckoutModal: React.FC = () => {
         subtotal: cartSubtotal,
         couponCode: 'DASHAIN2026',
         discountAmount,
+        taxVatRate: 0.13,
         taxAmount: vatAmount,
         totalAmount: grandTotal,
         payment: {
           method: paymentMethod,
-          status: paymentMethod === 'cod' ? 'pending' : 'verified',
-          transactionId: paymentData.transactionId || `TXN-${Date.now()}`,
+          status: paymentMethod === 'cod' ? ('pending' as const) : ('verified' as const),
+          transactionId: generatedTxnId,
           amount: grandTotal,
+          verifiedAt: paymentMethod !== 'cod' ? new Date().toISOString() : undefined,
         },
+        deliveryStatus: 'order_placed' as const,
+        timeline: [
+          {
+            status: 'order_placed' as const,
+            timestamp: new Date().toISOString(),
+            note: `Order placed successfully via Sajilo Bazar (${paymentMethod.toUpperCase()})`,
+            location: currentProvince.name,
+          },
+        ],
+        estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         notes: deliveryNotes,
       };
 
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload),
-      });
-      const orderResult = await res.json();
-
-      if (orderResult.success) {
-        setCreatedOrderNumber(orderResult.data.orderNumber);
-        setCreatedOrderId(orderResult.data.id);
-        clearCart();
-        await reloadOrders();
-        setStep(5);
-        showToast(`Order ${orderResult.data.orderNumber} placed successfully!`);
+      // Try backend API first (when running on full-stack server)
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload),
+        });
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const orderResult = await res.json();
+          if (orderResult.success && orderResult.data) {
+            setCreatedOrderNumber(orderResult.data.orderNumber);
+            setCreatedOrderId(orderResult.data.id);
+            clearCart();
+            await reloadOrders();
+            setStep(5);
+            showToast(`Order ${orderResult.data.orderNumber} placed successfully!`);
+            return;
+          }
+        }
+      } catch {
+        // Continue to static client fallback
       }
+
+      // Static hosting fallback (GitHub Pages)
+      addOrder(orderPayload);
+      setCreatedOrderNumber(orderNumber);
+      setCreatedOrderId(orderId);
+      clearCart();
+      setStep(5);
+      showToast(`Order ${orderNumber} placed successfully!`);
     } catch (e) {
       console.error(e);
       showToast('Error placing order. Please check inputs.');

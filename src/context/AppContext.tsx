@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, Category, User, Order, CartItem, UserRole } from '../types';
+import { Product, Category, User, Order, CartItem, UserRole, DeliveryStatus } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_USERS, INITIAL_ORDERS } from '../data/mockDatabase';
 import { TRANSLATIONS } from '../data/nepalData';
 
@@ -34,6 +34,8 @@ interface AppContextType {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   categories: Category[];
   orders: Order[];
+  addOrder: (order: Order) => void;
+  updateOrderStatus: (orderId: string, status: DeliveryStatus, note?: string) => void;
   reloadOrders: () => Promise<void>;
   reloadProducts: () => Promise<void>;
   activeView: 'shop' | 'admin' | 'customer_portal' | 'tracking';
@@ -133,25 +135,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const reloadProducts = async () => {
     try {
       const res = await fetch('/api/products');
-      const data = await res.json();
-      if (data.success) {
-        setProducts(data.data);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setProducts(data.data);
+        }
       }
-    } catch (err) {
-      console.error('Failed to load products from server:', err);
+    } catch {
+      // Fallback cleanly on static hosting (e.g. GitHub Pages)
     }
   };
 
   const reloadOrders = async () => {
     try {
       const res = await fetch('/api/orders');
-      const data = await res.json();
-      if (data.success) {
-        setOrders(data.data);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setOrders(data.data);
+        }
       }
-    } catch (err) {
-      console.error('Failed to load orders from server:', err);
+    } catch {
+      // Fallback cleanly on static hosting (e.g. GitHub Pages)
     }
+  };
+
+  const addOrder = (order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  };
+
+  const updateOrderStatus = (orderId: string, status: DeliveryStatus, note?: string) => {
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id === orderId || o.orderNumber === orderId) {
+          return {
+            ...o,
+            deliveryStatus: status,
+            timeline: [
+              ...o.timeline,
+              {
+                status,
+                timestamp: new Date().toISOString(),
+                note: note || `Status updated to ${status.replace(/_/g, ' ')}`,
+              },
+            ],
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return o;
+      })
+    );
   };
 
   useEffect(() => {
@@ -328,6 +361,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setProducts,
         categories,
         orders,
+        addOrder,
+        updateOrderStatus,
         reloadOrders,
         reloadProducts,
         activeView,

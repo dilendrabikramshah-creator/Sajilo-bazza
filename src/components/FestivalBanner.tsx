@@ -39,7 +39,7 @@ export const FestivalBanner: React.FC = () => {
       {/* Background Hero Image with measured scrim */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/src/assets/images/hero_festival_banner_1790777663954.jpg"
+          src="./images/hero_festival_banner_1790777663954.jpg"
           alt="Nepali Dashain and Tihar Festival Bazar"
           className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
           referrerPolicy="no-referrer"

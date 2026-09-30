@@ -109,9 +109,9 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Care': 'Dry clean only / Soft handwash',
     },
     images: [
-      '/src/assets/images/product_nepal_pashmina_1790777676916.jpg',
+      './images/product_nepal_pashmina_1790777676916.jpg',
     ],
-    featuredImage: '/src/assets/images/product_nepal_pashmina_1790777676916.jpg',
+    featuredImage: './images/product_nepal_pashmina_1790777676916.jpg',
     variants: [
       {
         id: 'var-color',
@@ -163,9 +163,9 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Brewing Temp': '90°C - 95°C',
     },
     images: [
-      '/src/assets/images/product_ilam_tea_1790777688573.jpg',
+      './images/product_ilam_tea_1790777688573.jpg',
     ],
-    featuredImage: '/src/assets/images/product_ilam_tea_1790777688573.jpg',
+    featuredImage: './images/product_ilam_tea_1790777688573.jpg',
     tags: ['ilam-tea', 'organic', 'orthodox', 'beverage', 'gift'],
     isFeatured: true,
     isFlashSale: false,
@@ -204,9 +204,9 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Origin': 'Handcrafted in Pokhara, Nepal',
     },
     images: [
-      '/src/assets/images/product_hemp_backpack_1790777698943.jpg',
+      './images/product_hemp_backpack_1790777698943.jpg',
     ],
-    featuredImage: '/src/assets/images/product_hemp_backpack_1790777698943.jpg',
+    featuredImage: './images/product_hemp_backpack_1790777698943.jpg',
     tags: ['hemp', 'backpack', 'sustainable', 'travel', 'nepali-craft'],
     isFeatured: true,
     isFlashSale: true,
@@ -246,8 +246,8 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Made In': 'Kathmandu, Nepal',
       'Ideal For': 'Running, Gym, Daily Casual',
     },
-    images: ['/src/assets/images/product_hemp_backpack_1790777698943.jpg'],
-    featuredImage: '/src/assets/images/product_hemp_backpack_1790777698943.jpg',
+    images: ['./images/product_hemp_backpack_1790777698943.jpg'],
+    featuredImage: './images/product_hemp_backpack_1790777698943.jpg',
     variants: [
       {
         id: 'var-shoe-size',
@@ -298,8 +298,8 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Network': '5G / 4G LTE VoLTE (NTC / Ncell Compatible)',
       'MDMS': 'Pre-registered & Approved by NTA',
     },
-    images: ['/src/assets/images/hero_festival_banner_1790777663954.jpg'],
-    featuredImage: '/src/assets/images/hero_festival_banner_1790777663954.jpg',
+    images: ['./images/hero_festival_banner_1790777663954.jpg'],
+    featuredImage: './images/hero_festival_banner_1790777663954.jpg',
     variants: [
       {
         id: 'var-storage',
@@ -346,8 +346,8 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Safety': 'Auto-Shutoff, Overheat & Voltage Fluctuation Protection',
       'Timer': 'Up to 3 Hours Digital Timer',
     },
-    images: ['/src/assets/images/hero_festival_banner_1790777663954.jpg'],
-    featuredImage: '/src/assets/images/hero_festival_banner_1790777663954.jpg',
+    images: ['./images/hero_festival_banner_1790777663954.jpg'],
+    featuredImage: './images/hero_festival_banner_1790777663954.jpg',
     tags: ['baltra', 'induction', 'kitchen', 'home', 'appliances'],
     isFeatured: false,
     isFlashSale: true,
@@ -385,8 +385,8 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Origin': 'Tansen, Palpa, Nepal',
       'Pattern': 'Original Palpali Butta',
     },
-    images: ['/src/assets/images/product_nepal_pashmina_1790777676916.jpg'],
-    featuredImage: '/src/assets/images/product_nepal_pashmina_1790777676916.jpg',
+    images: ['./images/product_nepal_pashmina_1790777676916.jpg'],
+    featuredImage: './images/product_nepal_pashmina_1790777676916.jpg',
     variants: [
       {
         id: 'var-dhaka-size',
@@ -433,8 +433,8 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Origin': 'Marpha, Mustang (Elevation 2,650m)',
       'Preservatives': 'Zero Chemicals or Artificial Sugar',
     },
-    images: ['/src/assets/images/product_ilam_tea_1790777688573.jpg'],
-    featuredImage: '/src/assets/images/product_ilam_tea_1790777688573.jpg',
+    images: ['./images/product_ilam_tea_1790777688573.jpg'],
+    featuredImage: './images/product_ilam_tea_1790777688573.jpg',
     tags: ['mustang', 'apple', 'organic', 'dry-fruits', 'snack', 'healthy'],
     isFeatured: false,
     isLocalNepaliProduct: true,
@@ -457,7 +457,7 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
     titleNepali: 'बडा दसैं धमाका २०८३',
     tagline: 'Up to 50% Off on Electronics, Fashion & Nepali Specials! Free Delivery Across Nepal',
     festivalType: 'dashain',
-    bannerImage: '/src/assets/images/hero_festival_banner_1790777663954.jpg',
+    bannerImage: './images/hero_festival_banner_1790777663954.jpg',
     startDate: '2026-09-15T00:00:00Z',
     endDate: '2026-10-25T23:59:59Z',
     discountHighlight: 'Upto 50% Off + Rs. 500 Cashback',
@@ -471,7 +471,7 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
     titleNepali: 'शुभ तिहार तथा दीपावली मेला',
     tagline: 'Festive Decorative Lights, Dry Fruit Gift Hampers & Gadget Offers',
     festivalType: 'tihar',
-    bannerImage: '/src/assets/images/hero_festival_banner_1790777663954.jpg',
+    bannerImage: './images/hero_festival_banner_1790777663954.jpg',
     startDate: '2026-10-26T00:00:00Z',
     endDate: '2026-11-10T23:59:59Z',
     discountHighlight: 'Flat 20% on Gifts & Lights',
@@ -601,7 +601,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: 'prod-01',
         productName: 'Pure Cashmere Himalayan Pashmina Shawl',
-        productImage: '/src/assets/images/product_nepal_pashmina_1790777676916.jpg',
+        productImage: './images/product_nepal_pashmina_1790777676916.jpg',
         sku: 'NP-PAS-001',
         quantity: 1,
         unitPrice: 6999,
@@ -611,7 +611,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: 'prod-02',
         productName: 'Organic Orthodox Ilam Black Tea',
-        productImage: '/src/assets/images/product_ilam_tea_1790777688573.jpg',
+        productImage: './images/product_ilam_tea_1790777688573.jpg',
         sku: 'NP-TEA-250',
         quantity: 2,
         unitPrice: 990,
@@ -673,7 +673,7 @@ export const INITIAL_ORDERS: Order[] = [
       {
         productId: 'prod-04',
         productName: 'Goldstar Heritage Classic Running Shoes',
-        productImage: '/src/assets/images/product_hemp_backpack_1790777698943.jpg',
+        productImage: './images/product_hemp_backpack_1790777698943.jpg',
         sku: 'GS-HER-01',
         quantity: 1,
         unitPrice: 1599,

@@ -76,7 +76,7 @@ export const AdminDashboard: React.FC = () => {
   const [prodPrice, setProdPrice] = useState('5000');
   const [prodDiscountPrice, setProdDiscountPrice] = useState('4200');
   const [prodStock, setProdStock] = useState('20');
-  const [prodImage, setProdImage] = useState('/src/assets/images/product_nepal_pashmina_1790777676916.jpg');
+  const [prodImage, setProdImage] = useState('./images/product_nepal_pashmina_1790777676916.jpg');
   const [prodDesc, setProdDesc] = useState('');
   const [prodDistrict, setProdDistrict] = useState('Kathmandu');
   const [isLocal, setIsLocal] = useState(true);

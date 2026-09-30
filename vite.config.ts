@@ -6,6 +6,7 @@ import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
+    base: './',
     plugins: [
       react(),
       tailwindcss(),
@@ -13,18 +14,18 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'icon.svg'],
         manifest: {
-          id: '/',
+          id: './',
           name: 'Sajilo Bazar - Nepal Ko Sajilo Online Bazar',
           short_name: 'SajiloBazar',
           description: 'Nepal premier e-commerce marketplace for electronics, fashion, groceries, and authentic local products with eSewa, Khalti, and COD.',
           theme_color: '#DC2626',
           background_color: '#FFFFFF',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: './',
+          scope: './',
           icons: [
             {
-              src: '/icon.svg',
+              src: './icon.svg',
               sizes: '192x192 512x512',
               type: 'image/svg+xml',
               purpose: 'any',

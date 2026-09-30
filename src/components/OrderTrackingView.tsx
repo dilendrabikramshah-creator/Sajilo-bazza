@@ -36,28 +36,33 @@ export const OrderTrackingView: React.FC = () => {
     if (!num.trim()) return;
     setLoading(true);
     setError('');
+
+    // Check local orders state first for instant response
+    const localMatch = orders.find(
+      (o) => o.orderNumber.toUpperCase() === num.trim().toUpperCase()
+    );
+
     try {
       const res = await fetch(`/api/orders/track/${num.trim()}`);
-      const data = await res.json();
-      if (data.success) {
-        setCurrentOrder(data.data);
-      } else {
-        setError('Order not found. Please verify the order number (e.g. SB-2026-000123)');
-        setCurrentOrder(null);
+      if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setCurrentOrder(data.data);
+          setLoading(false);
+          return;
+        }
       }
     } catch {
-      // Fallback from local state
-      const match = orders.find(
-        (o) => o.orderNumber.toUpperCase() === num.trim().toUpperCase()
-      );
-      if (match) {
-        setCurrentOrder(match);
-      } else {
-        setError('Order not found. Please try SB-2026-000123');
-      }
-    } finally {
-      setLoading(false);
+      // Continue to local match
     }
+
+    if (localMatch) {
+      setCurrentOrder(localMatch);
+    } else {
+      setError('Order not found. Please try SB-2026-000123 or SB-2026-000124');
+      setCurrentOrder(null);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
